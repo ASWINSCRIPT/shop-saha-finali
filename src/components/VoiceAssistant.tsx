@@ -31,15 +31,15 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
   };
 
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = language === 'ml' ? 'ml-IN' : 'en-IN';
 
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
@@ -54,7 +54,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
         }
       };
 
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
@@ -123,7 +123,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
   };
 
   const speak = (text: string) => {
-    if ('speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = language === 'ml' ? 'ml-IN' : 'en-IN';
       utterance.rate = 0.9;

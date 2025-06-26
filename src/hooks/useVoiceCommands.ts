@@ -10,15 +10,15 @@ export const useVoiceCommands = ({ onDashboardOpen, language }: UseVoiceCommands
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       
       recognition.continuous = true;
       recognition.interimResults = false;
       recognition.lang = language === 'ml' ? 'ml-IN' : 'en-IN';
 
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase();
         
         if (transcript.includes('dashboard') || transcript.includes('ഡാഷ്ബോർഡ്')) {
@@ -26,7 +26,7 @@ export const useVoiceCommands = ({ onDashboardOpen, language }: UseVoiceCommands
         }
       };
 
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Global voice recognition error:', event.error);
       };
 
