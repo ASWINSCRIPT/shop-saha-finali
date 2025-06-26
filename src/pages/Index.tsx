@@ -18,26 +18,38 @@ interface Transaction {
 }
 
 const Index = () => {
-  const { user } = useUser();
+  console.log('Index component rendering...');
+  
+  const { user, isLoaded } = useUser();
   const [language, setLanguage] = useState<'en' | 'ml'>('en');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activeTab, setActiveTab] = useState('home');
 
+  console.log('User loaded:', isLoaded, 'User:', user);
+
   // Load transactions from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('cashbook-transactions');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setTransactions(parsed.map((t: any) => ({
-        ...t,
-        date: new Date(t.date)
-      })));
+    try {
+      const saved = localStorage.getItem('cashbook-transactions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setTransactions(parsed.map((t: any) => ({
+          ...t,
+          date: new Date(t.date)
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading transactions:', error);
     }
   }, []);
 
   // Save transactions to localStorage
   useEffect(() => {
-    localStorage.setItem('cashbook-transactions', JSON.stringify(transactions));
+    try {
+      localStorage.setItem('cashbook-transactions', JSON.stringify(transactions));
+    } catch (error) {
+      console.error('Error saving transactions:', error);
+    }
   }, [transactions]);
 
   const addTransaction = (type: 'income' | 'expense', amount: number, description: string) => {
@@ -89,6 +101,20 @@ const Index = () => {
       switchLang: 'English'
     }
   };
+
+  // Show loading while Clerk is initializing
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="w-8 h-8 text-white" />
+          </div>
+          <p className="text-gray-600">Loading CashBook...</p>
+        </div>
+      </div>
+    );
+  }
 
   const SignedOutContent = () => (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -257,15 +283,17 @@ const Index = () => {
     </div>
   );
 
+  console.log('About to render SignedIn/SignedOut components');
+
   return (
-    <>
+    <div>
       <SignedOut>
         <SignedOutContent />
       </SignedOut>
       <SignedIn>
         <SignedInContent />
       </SignedIn>
-    </>
+    </div>
   );
 };
 
