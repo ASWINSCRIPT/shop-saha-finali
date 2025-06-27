@@ -91,7 +91,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
         transactionType = 'expense';
       }
       
-      if (transactionType && amount > 0) {
+      if (transactionType && amount > 0 && amount <= 100000) {
         console.log(`Adding ${transactionType} transaction:`, { amount, description });
         
         // Add the transaction
@@ -110,7 +110,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
           setTranscript('');
         }, 3000);
       } else {
-        console.log('Could not determine transaction type or amount');
+        console.log('Could not determine transaction type or amount invalid');
         speak(language === 'ml' ? 'ഇടപാട് മനസ്സിലായില്ല. വീണ്ടും ശ്രമിക്കൂ.' : 'Transaction not understood. Please try again.');
       }
     } else {
@@ -123,11 +123,16 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
     const numberWords = {
       'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
       'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-      'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50,
-      'hundred': 100, 'thousand': 1000,
+      'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+      'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+      'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70,
+      'eighty': 80, 'ninety': 90, 'hundred': 100, 'thousand': 1000,
       'ഒന്ന്': 1, 'രണ്ട്': 2, 'മൂന്ന്': 3, 'നാല്': 4, 'അഞ്ച്': 5,
       'ആറ്': 6, 'ഏഴ്': 7, 'എട്ട്': 8, 'ഒമ്പത്': 9, 'പത്ത്': 10,
-      'നൂറ്': 100, 'ആയിരം': 1000
+      'പതിനൊന്ന്': 11, 'പന്ത്രണ്ട്': 12, 'പതിമൂന്ന്': 13, 'പതിനാല്': 14, 'പതിനഞ്ച്': 15,
+      'പതിനാറ്': 16, 'പതിനേഴ്': 17, 'പതിനെട്ട്': 18, 'പത്തൊമ്പത്': 19, 'ഇരുപത്': 20,
+      'മുപ്പത്': 30, 'നാല്പത്': 40, 'അമ്പത്': 50, 'അറുപത്': 60, 'എഴുപത്': 70,
+      'എണ്‍പത്': 80, 'തൊണ്ണൂറ്': 90, 'നൂറ്': 100, 'ആയിരം': 1000
     };
     
     const numbers: number[] = [];
@@ -135,15 +140,37 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
     // Extract digit numbers (including decimals)
     const digitMatches = text.match(/\d+\.?\d*/g);
     if (digitMatches) {
-      numbers.push(...digitMatches.map(n => parseFloat(n)).filter(n => n > 0 && n <= 1000000));
+      numbers.push(...digitMatches.map(n => parseFloat(n)).filter(n => n > 0 && n <= 100000));
     }
     
-    // Extract word numbers
-    Object.entries(numberWords).forEach(([word, value]) => {
-      if (text.includes(word)) {
-        numbers.push(value);
+    // Extract word numbers with better parsing
+    let currentNum = 0;
+    let result = 0;
+    
+    const words = text.toLowerCase().split(/\s+/);
+    
+    for (const word of words) {
+      if (numberWords[word]) {
+        const value = numberWords[word];
+        
+        if (value === 100 || value === 1000) {
+          if (currentNum === 0) currentNum = 1;
+          currentNum *= value;
+          result += currentNum;
+          currentNum = 0;
+        } else {
+          currentNum += value;
+        }
       }
-    });
+    }
+    
+    if (currentNum > 0) {
+      result += currentNum;
+    }
+    
+    if (result > 0 && result <= 100000) {
+      numbers.push(result);
+    }
     
     console.log('Number extraction from text:', text, 'Found numbers:', numbers);
     return numbers;
@@ -173,31 +200,31 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
   };
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-100 border-2 border-blue-200">
+    <Card className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-100 border-2 border-blue-200 w-full max-w-md mx-auto">
       <div className="flex flex-col items-center space-y-4">
         <div className="flex items-center gap-2 mb-2">
-          <BookOpen className="w-6 h-6 text-blue-600" />
-          <h3 className="text-lg font-semibold text-blue-800">CashBook Assistant</h3>
+          <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+          <h3 className="text-base sm:text-lg font-semibold text-blue-800">CashBook Assistant</h3>
         </div>
         
         <Button
           onClick={toggleListening}
           variant={isListening ? "destructive" : "default"}
           size="lg"
-          className="w-20 h-20 rounded-full"
+          className="w-16 h-16 sm:w-20 sm:h-20 rounded-full"
         >
-          {isListening ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
+          {isListening ? <MicOff className="w-6 h-6 sm:w-8 sm:h-8" /> : <Mic className="w-6 h-6 sm:w-8 sm:h-8" />}
         </Button>
         
         <div className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-xs sm:text-sm text-gray-600">
             {isListening 
               ? texts[language].listening 
               : texts[language].notListening
             }
           </p>
           {transcript && (
-            <p className="text-xs text-blue-600 mt-2 italic">"{transcript}"</p>
+            <p className="text-xs text-blue-600 mt-2 italic break-words">"{transcript}"</p>
           )}
         </div>
       </div>

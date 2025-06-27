@@ -1,13 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/clerk-react';
-import { BookOpen, Globe, BarChart3, Mic } from 'lucide-react';
+import { BookOpen, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { motion, AnimatePresence } from 'framer-motion';
 import VoiceAssistant from '@/components/VoiceAssistant';
 import Dashboard from '@/components/Dashboard';
 import TransactionForm from '@/components/TransactionForm';
+import AppDock from '@/components/AppDock';
+import ProfileSettings from '@/components/ProfileSettings';
+import { ThemeProvider } from '@/components/theme-provider';
 
 interface Transaction {
   id: string;
@@ -80,36 +83,14 @@ const Index = () => {
       welcome: 'Welcome to CashBook',
       personalizedWelcome: 'Hi',
       subtitle: 'Your friendly ledger companion for smart financial management',
-      features: 'Features',
-      voiceRecognition: 'Voice Recognition',
-      voiceDesc: 'Malayalam voice commands with "Hey CashBook" activation',
-      analytics: 'Smart Analytics',
-      analyticsDesc: 'Visual charts and insights for better financial decisions',
-      multilingual: 'Bilingual Support',
-      multilingualDesc: 'Complete English and Malayalam language support',
       getStarted: 'Get Started with Google',
-      home: 'Home',
-      transactions: 'Transactions',
-      dashboard: 'Dashboard',
-      voice: 'Voice',
       switchLang: 'മലയാളം'
     },
     ml: {
       welcome: 'കാഷ്ബുക്കിലേക്ക് സ്വാഗതം',
       personalizedWelcome: 'ഹായ്',
       subtitle: 'സ്‌മാർട്ട് ഫിനാൻഷ്യൽ മാനേജ്‌മെന്റിനായുള്ള നിങ്ങളുടെ സൗഹൃദപരമായ ലെഡ്ജർ കമ്പാനിയൻ',
-      features: 'സവിശേഷതകൾ',
-      voiceRecognition: 'വോയ്‌സ് തിരിച്ചറിയൽ',
-      voiceDesc: '"ഹേയ് കാഷ്ബുക്ക്" ആക്ടിവേഷനോടെ മലയാളം വോയ്‌സ് കമാൻഡുകൾ',
-      analytics: 'സ്മാർട്ട് അനലിറ്റിക്‌സ്',
-      analyticsDesc: 'മികച്ച സാമ്പത്തിക തീരുമാനങ്ങൾക്കായി വിഷ്വൽ ചാർട്ടുകളും സ്ഥിതിവിവരങ്ങളും',
-      multilingual: 'ദ്വിഭാഷാ പിന്തുണ',
-      multilingualDesc: 'പൂർണ്ണമായ ഇംഗ്ലീഷ്, മലയാളം ഭാഷാ പിന്തുണ',
       getStarted: 'Google ഉപയോഗിച്ച് ആരംഭിക്കുക',
-      home: 'ഹോം',
-      transactions: 'ഇടപാടുകൾ',
-      dashboard: 'ഡാഷ്ബോർഡ്',
-      voice: 'വോയ്‌സ്',
       switchLang: 'English'
     }
   };
@@ -142,177 +123,178 @@ const Index = () => {
     );
   }
 
-  console.log('Rendering main content with Clerk loaded:', { isSignedIn });
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+          >
+            <div className="text-center py-4 sm:py-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+                {texts[language].personalizedWelcome} {user?.firstName || 'User'}!
+              </h1>
+              <p className="text-gray-600 mb-6 sm:mb-8 px-4">{texts[language].subtitle}</p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 max-w-6xl mx-auto px-4">
+                <TransactionForm onAdd={addTransaction} language={language} />
+                <VoiceAssistant onTransactionAdd={addTransaction} language={language} />
+              </div>
+            </div>
+          </motion.div>
+        );
+      case 'transactions':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="flex justify-center px-4"
+          >
+            <TransactionForm onAdd={addTransaction} language={language} />
+          </motion.div>
+        );
+      case 'dashboard':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <Dashboard transactions={transactions} language={language} />
+          </motion.div>
+        );
+      case 'voice':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="flex justify-center px-4"
+          >
+            <VoiceAssistant onTransactionAdd={addTransaction} language={language} />
+          </motion.div>
+        );
+      case 'settings':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="flex justify-center px-4"
+          >
+            <ProfileSettings language={language} />
+          </motion.div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="min-h-screen">
-      <SignedOut>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-          {/* Header */}
-          <header className="p-6 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-white" />
+    <ThemeProvider defaultTheme="system" storageKey="cashbook-ui-theme">
+      <div className="min-h-screen">
+        <SignedOut>
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+            {/* Header */}
+            <header className="p-4 sm:p-6 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <div className="font-bold text-lg sm:text-xl text-gray-800">CashBook</div>
               </div>
-              <div className="font-bold text-xl text-gray-800">CashBook</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setLanguage(language === 'en' ? 'ml' : 'en')}
-                className="flex items-center gap-2"
-              >
-                <Globe className="w-4 h-4" />
-                {texts[language].switchLang}
-              </Button>
-            </div>
-          </header>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLanguage(language === 'en' ? 'ml' : 'en')}
+                  className="flex items-center gap-2"
+                >
+                  <Globe className="w-4 h-4" />
+                  {texts[language].switchLang}
+                </Button>
+              </div>
+            </header>
 
-          {/* Hero Section */}
-          <main className="flex-1 flex flex-col items-center justify-center px-4 text-center py-12">
-            <div className="max-w-4xl mx-auto space-y-8">
-              {/* Main Card */}
-              <Card className="p-8 bg-white/80 backdrop-blur-sm border-0 shadow-2xl">
-                <div className="space-y-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
-                    <BookOpen className="w-8 h-8 text-white" />
+            {/* Hero Section */}
+            <main className="flex-1 flex flex-col items-center justify-center px-4 text-center py-8 sm:py-12">
+              <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+                {/* Main Card */}
+                <Card className="p-6 sm:p-8 bg-white/80 backdrop-blur-sm border-0 shadow-2xl">
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
+                      <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    </div>
+                    
+                    <div>
+                      <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4">
+                        {texts[language].welcome}
+                      </h1>
+                      <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8">
+                        {texts[language].subtitle}
+                      </p>
+                    </div>
+
+                    <SignInButton mode="modal">
+                      <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 sm:px-8 py-3 text-base sm:text-lg">
+                        {texts[language].getStarted}
+                      </Button>
+                    </SignInButton>
                   </div>
-                  
-                  <div>
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                      {texts[language].welcome}
-                    </h1>
-                    <p className="text-lg text-gray-600 mb-8">
-                      {texts[language].subtitle}
-                    </p>
-                  </div>
-
-                  <SignInButton mode="modal">
-                    <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 text-lg">
-                      {texts[language].getStarted}
-                    </Button>
-                  </SignInButton>
-                </div>
-              </Card>
-
-              {/* Features */}
-              <div className="mt-12">
-                <h2 className="text-2xl font-bold text-gray-800 mb-8">{texts[language].features}</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="p-6 bg-white/60 backdrop-blur-sm">
-                    <CardHeader className="text-center pb-4">
-                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <Mic className="w-6 h-6 text-green-600" />
-                      </div>
-                      <CardTitle className="text-lg">{texts[language].voiceRecognition}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 text-sm">{texts[language].voiceDesc}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="p-6 bg-white/60 backdrop-blur-sm">
-                    <CardHeader className="text-center pb-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <BarChart3 className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <CardTitle className="text-lg">{texts[language].analytics}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 text-sm">{texts[language].analyticsDesc}</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="p-6 bg-white/60 backdrop-blur-sm">
-                    <CardHeader className="text-center pb-4">
-                      <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <Globe className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <CardTitle className="text-lg">{texts[language].multilingual}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 text-sm">{texts[language].multilingualDesc}</p>
-                    </CardContent>
-                  </Card>
-                </div>
+                </Card>
               </div>
-            </div>
-          </main>
-        </div>
-      </SignedOut>
-
-      <SignedIn>
-        <div className="min-h-screen bg-gray-50">
-          {/* Header */}
-          <header className="bg-white shadow-sm p-4 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <div className="font-bold text-lg">CashBook</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-600">
-                {texts[language].personalizedWelcome} {user?.firstName || user?.emailAddresses[0]?.emailAddress}!
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setLanguage(language === 'en' ? 'ml' : 'en')}
-                className="flex items-center gap-2"
-              >
-                <Globe className="w-4 h-4" />
-                {texts[language].switchLang}
-              </Button>
-              <UserButton />
-            </div>
-          </header>
-
-          {/* Main Content */}
-          <div className="p-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
-                <TabsTrigger value="home">{texts[language].home}</TabsTrigger>
-                <TabsTrigger value="transactions">{texts[language].transactions}</TabsTrigger>
-                <TabsTrigger value="dashboard">{texts[language].dashboard}</TabsTrigger>
-                <TabsTrigger value="voice">{texts[language].voice}</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="home" className="space-y-6">
-                <div className="text-center py-8">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                    {texts[language].personalizedWelcome} {user?.firstName || 'User'}!
-                  </h1>
-                  <p className="text-gray-600 mb-8">{texts[language].subtitle}</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                    <TransactionForm onAdd={addTransaction} language={language} />
-                    <VoiceAssistant onTransactionAdd={addTransaction} language={language} />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="transactions">
-                <div className="flex justify-center">
-                  <TransactionForm onAdd={addTransaction} language={language} />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="dashboard">
-                <Dashboard transactions={transactions} language={language} />
-              </TabsContent>
-
-              <TabsContent value="voice">
-                <div className="flex justify-center">
-                  <VoiceAssistant onTransactionAdd={addTransaction} language={language} />
-                </div>
-              </TabsContent>
-            </Tabs>
+            </main>
           </div>
-        </div>
-      </SignedIn>
-    </div>
+        </SignedOut>
+
+        <SignedIn>
+          <div className="min-h-screen bg-background">
+            {/* Header */}
+            <header className="bg-card shadow-sm p-4 flex justify-between items-center border-b">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </div>
+                <div className="font-bold text-base sm:text-lg">CashBook</div>
+              </div>
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
+                  {texts[language].personalizedWelcome} {user?.firstName || user?.emailAddresses[0]?.emailAddress}!
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLanguage(language === 'en' ? 'ml' : 'en')}
+                  className="flex items-center gap-2"
+                >
+                  <Globe className="w-4 h-4" />
+                  <span className="hidden sm:inline">{texts[language].switchLang}</span>
+                </Button>
+                <UserButton />
+              </div>
+            </header>
+
+            {/* Main Content */}
+            <div className="p-4 sm:p-6 pb-24">
+              <AnimatePresence mode="wait">
+                {renderTabContent()}
+              </AnimatePresence>
+            </div>
+
+            {/* Dock Navigation */}
+            <AppDock 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab} 
+              language={language} 
+            />
+          </div>
+        </SignedIn>
+      </div>
+    </ThemeProvider>
   );
 };
 
