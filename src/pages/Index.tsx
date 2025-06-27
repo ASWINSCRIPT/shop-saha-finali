@@ -147,7 +147,6 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <SignedOut>
-        {console.log('Rendering SignedOut content')}
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
           {/* Header */}
           <header className="p-6 flex justify-between items-center">
@@ -244,7 +243,6 @@ const Index = () => {
       </SignedOut>
 
       <SignedIn>
-        {console.log('Rendering SignedIn content')}
         <div className="min-h-screen bg-gray-50">
           {/* Header */}
           <header className="bg-white shadow-sm p-4 flex justify-between items-center">
