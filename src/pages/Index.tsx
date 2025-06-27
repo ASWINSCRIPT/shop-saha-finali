@@ -26,7 +26,7 @@ const Index = () => {
   const { user, isLoaded, isSignedIn } = useUser();
   const [language, setLanguage] = useState<'en' | 'ml'>('en');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('dashboard'); // Changed default to dashboard
   const [error, setError] = useState<string | null>(null);
 
   console.log('Clerk state:', { isLoaded, isSignedIn, user: !!user });
@@ -125,21 +125,32 @@ const Index = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="px-2 sm:px-4"
+          >
+            <Dashboard transactions={transactions} language={language} />
+          </motion.div>
+        );
       case 'home':
         return (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
+            className="space-y-4 sm:space-y-6"
           >
-            <div className="text-center py-4 sm:py-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+            <div className="text-center py-2 sm:py-4">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
                 {texts[language].personalizedWelcome} {user?.firstName || 'User'}!
               </h1>
-              <p className="text-gray-600 mb-6 sm:mb-8 px-4">{texts[language].subtitle}</p>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4">{texts[language].subtitle}</p>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 max-w-6xl mx-auto px-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 max-w-6xl mx-auto px-2 sm:px-4">
                 <TransactionForm onAdd={addTransaction} language={language} />
                 <VoiceAssistant onTransactionAdd={addTransaction} language={language} />
               </div>
@@ -152,19 +163,9 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex justify-center px-4"
+            className="flex justify-center px-2 sm:px-4"
           >
             <TransactionForm onAdd={addTransaction} language={language} />
-          </motion.div>
-        );
-      case 'dashboard':
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            <Dashboard transactions={transactions} language={language} />
           </motion.div>
         );
       case 'voice':
@@ -173,7 +174,7 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex justify-center px-4"
+            className="flex justify-center px-2 sm:px-4"
           >
             <VoiceAssistant onTransactionAdd={addTransaction} language={language} />
           </motion.div>
@@ -184,7 +185,7 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex justify-center px-4"
+            className="flex justify-center px-2 sm:px-4"
           >
             <ProfileSettings language={language} />
           </motion.div>
@@ -200,47 +201,47 @@ const Index = () => {
         <SignedOut>
           <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
             {/* Header */}
-            <header className="p-4 sm:p-6 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            <header className="p-3 sm:p-4 md:p-6 flex justify-between items-center">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-white" />
                 </div>
-                <div className="font-bold text-lg sm:text-xl text-gray-800">CashBook</div>
+                <div className="font-bold text-sm sm:text-base md:text-lg lg:text-xl text-gray-800">CashBook</div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setLanguage(language === 'en' ? 'ml' : 'en')}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
                 >
-                  <Globe className="w-4 h-4" />
-                  {texts[language].switchLang}
+                  <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{texts[language].switchLang}</span>
                 </Button>
               </div>
             </header>
 
             {/* Hero Section */}
-            <main className="flex-1 flex flex-col items-center justify-center px-4 text-center py-8 sm:py-12">
-              <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+            <main className="flex-1 flex flex-col items-center justify-center px-3 sm:px-4 text-center py-4 sm:py-8 md:py-12">
+              <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 md:space-y-8">
                 {/* Main Card */}
-                <Card className="p-6 sm:p-8 bg-white/80 backdrop-blur-sm border-0 shadow-2xl">
-                  <div className="space-y-4 sm:space-y-6">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
-                      <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                <Card className="p-4 sm:p-6 md:p-8 bg-white/80 backdrop-blur-sm border-0 shadow-2xl">
+                  <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto">
+                      <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 text-white" />
                     </div>
                     
                     <div>
-                      <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4">
+                      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">
                         {texts[language].welcome}
                       </h1>
-                      <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8">
+                      <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-4 sm:mb-6 md:mb-8">
                         {texts[language].subtitle}
                       </p>
                     </div>
 
                     <SignInButton mode="modal">
-                      <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 sm:px-8 py-3 text-base sm:text-lg">
+                      <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 text-sm sm:text-base md:text-lg">
                         {texts[language].getStarted}
                       </Button>
                     </SignInButton>
@@ -254,24 +255,24 @@ const Index = () => {
         <SignedIn>
           <div className="min-h-screen bg-background">
             {/* Header */}
-            <header className="bg-card shadow-sm p-4 flex justify-between items-center border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            <header className="bg-card shadow-sm p-3 sm:p-4 flex justify-between items-center border-b">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white" />
                 </div>
-                <div className="font-bold text-base sm:text-lg">CashBook</div>
+                <div className="font-bold text-sm sm:text-base md:text-lg">CashBook</div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
+              <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
+                <div className="text-xs sm:text-sm text-muted-foreground hidden md:block">
                   {texts[language].personalizedWelcome} {user?.firstName || user?.emailAddresses[0]?.emailAddress}!
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setLanguage(language === 'en' ? 'ml' : 'en')}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
                 >
-                  <Globe className="w-4 h-4" />
+                  <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{texts[language].switchLang}</span>
                 </Button>
                 <UserButton />
@@ -279,7 +280,7 @@ const Index = () => {
             </header>
 
             {/* Main Content */}
-            <div className="p-4 sm:p-6 pb-24">
+            <div className="p-2 sm:p-4 md:p-6 pb-20 sm:pb-24">
               <AnimatePresence mode="wait">
                 {renderTabContent()}
               </AnimatePresence>
