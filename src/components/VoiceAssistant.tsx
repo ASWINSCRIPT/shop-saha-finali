@@ -11,21 +11,18 @@ interface VoiceAssistantProps {
 
 const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, language }) => {
   const [isListening, setIsListening] = useState(false);
-  const [isWaitingForHey, setIsWaitingForHey] = useState(true);
   const [transcript, setTranscript] = useState('');
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
   const texts = {
     en: {
-      sayHey: 'Say "Hey CashBook" to start',
-      listening: 'Listening...',
-      notListening: 'Click to activate voice',
+      listening: 'Listening for transactions...',
+      notListening: 'Click to start voice recording',
       processingTransaction: 'Processing transaction...'
     },
     ml: {
-      sayHey: '"ഹേയ് കാഷ്ബുക്ക്" എന്ന് പറയൂ',
-      listening: 'കേൾക്കുന്നു...',
-      notListening: 'വോയ്‌സ് സജീവമാക്കാൻ ക്ലിക്ക് ചെയ്യുക',
+      listening: 'ഇടപാടുകൾക്കായി കേൾക്കുന്നു...',
+      notListening: 'വോയ്‌സ് റെക്കോർഡിംഗ് ആരംഭിക്കാൻ ക്ലിക്ക് ചെയ്യുക',
       processingTransaction: 'ഇടപാട് പ്രോസസ്സ് ചെയ്യുന്നു...'
     }
   };
@@ -67,18 +64,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
   const processVoiceCommand = (command: string) => {
     console.log('Processing voice command:', command);
     
-    // Check for activation phrase
-    if (isWaitingForHey) {
-      if (command.includes('hey cashbook') || command.includes('ഹേയ് കാഷ്ബുക്ക്')) {
-        console.log('Activation phrase detected');
-        setIsWaitingForHey(false);
-        speak(language === 'ml' ? 'ഞാൻ തയ്യാറാണ്. എന്താണ് നിങ്ങളുടെ ഇടപാട്?' : 'I am ready. What is your transaction?');
-        return;
-      }
-      return;
-    }
-
-    // Process transaction commands
+    // Process transaction commands directly without activation phrase
     const numbers = extractNumbers(command);
     console.log('Extracted numbers:', numbers);
     
@@ -91,12 +77,12 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
       if (command.includes('income') || command.includes('വരുമാനം') || 
           command.includes('got') || command.includes('received') || 
           command.includes('earned') || command.includes('salary') ||
-          command.includes('profit')) {
+          command.includes('profit') || command.includes('credit')) {
         transactionType = 'income';
       } else if (command.includes('expense') || command.includes('ചെലവ്') || 
                  command.includes('spent') || command.includes('paid') ||
                  command.includes('bought') || command.includes('cost') ||
-                 command.includes('rupees')) {
+                 command.includes('rupees') || command.includes('purchase')) {
         transactionType = 'expense';
       }
       
@@ -118,16 +104,15 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
         
         speak(feedbackMessage);
         console.log('Transaction added successfully:', feedbackMessage);
+        
+        // Clear transcript after processing
+        setTimeout(() => {
+          setTranscript('');
+        }, 3000);
       } else {
         console.log('Could not determine transaction type or amount');
         speak(language === 'ml' ? 'ഇടപാട് മനസ്സിലായില്ല. വീണ്ടും ശ്രമിക്കൂ.' : 'Transaction not understood. Please try again.');
       }
-      
-      // Reset to waiting state
-      setTimeout(() => {
-        setIsWaitingForHey(true);
-        setTranscript('');
-      }, 3000);
     } else {
       console.log('No numbers found in command');
       speak(language === 'ml' ? 'തുക പറയൂ' : 'Please mention the amount');
@@ -206,11 +191,9 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
         
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            {isWaitingForHey 
-              ? texts[language].sayHey
-              : isListening 
-                ? texts[language].listening 
-                : texts[language].notListening
+            {isListening 
+              ? texts[language].listening 
+              : texts[language].notListening
             }
           </p>
           {transcript && (
