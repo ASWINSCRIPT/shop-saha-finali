@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -90,28 +89,21 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
     }
   }, [language, isComponentActive]);
 
-  // Auto-activation on component touch/focus
+  // Auto-activate and start listening on mount
   useEffect(() => {
-    const handleComponentInteraction = () => {
-      if (!isComponentActive) {
-        setIsComponentActive(true);
-        startAutoActivationTimer();
-      }
-    };
-
-    const component = componentRef.current;
-    if (component) {
-      component.addEventListener('touchstart', handleComponentInteraction);
-      component.addEventListener('mouseenter', handleComponentInteraction);
-      component.addEventListener('focus', handleComponentInteraction);
-      
-      return () => {
-        component.removeEventListener('touchstart', handleComponentInteraction);
-        component.removeEventListener('mouseenter', handleComponentInteraction);
-        component.removeEventListener('focus', handleComponentInteraction);
-      };
+    setIsComponentActive(true);
+    // Start listening immediately
+    if (recognition) {
+      startListening();
+      // Set a timer to stop listening after 6 seconds if no transcript
+      const stopTimer = setTimeout(() => {
+        if (isListening === false || transcript === '') {
+          stopListening();
+        }
+      }, 6000);
+      return () => clearTimeout(stopTimer);
     }
-  }, [isComponentActive]);
+  }, [recognition]);
 
   const startAutoActivationTimer = () => {
     if (autoActivationTimer) {

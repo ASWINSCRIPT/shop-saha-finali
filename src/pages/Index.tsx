@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/clerk-react';
 import { BookOpen, Globe } from 'lucide-react';
@@ -24,9 +23,9 @@ const Index = () => {
   console.log('Index component rendering...');
   
   const { user, isLoaded, isSignedIn } = useUser();
-  const [language, setLanguage] = useState<'en' | 'ml'>('en');
+  const [language, setLanguage] = useState<'en' | 'ml'>('ml');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [activeTab, setActiveTab] = useState('dashboard'); // Changed default to dashboard
+  const [activeTab, setActiveTab] = useState('voice'); // Changed default to voice
   const [error, setError] = useState<string | null>(null);
 
   console.log('Clerk state:', { isLoaded, isSignedIn, user: !!user });
@@ -198,6 +197,8 @@ const Index = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="cashbook-ui-theme">
       <div className="min-h-screen">
+        {/* Floating Voice Assistant */}
+        {/* <FloatingVoiceAssistant /> */}
         <SignedOut>
           <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
             {/* Header */}
