@@ -157,6 +157,11 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
     if (transcript && transcript !== lastProcessedTranscript.current) {
       lastProcessedTranscript.current = transcript;
       processVoiceCommand(transcript.toLowerCase());
+      // Reset transcript and lastProcessedTranscript after processing to prevent duplicate entries
+      setTimeout(() => {
+        setTranscript('');
+        lastProcessedTranscript.current = '';
+      }, 100); // Short delay to allow UI update
     }
   }, [transcript]);
 
