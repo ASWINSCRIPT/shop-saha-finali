@@ -55,7 +55,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
         if (finalTranscript) {
           console.log('Voice transcript received:', finalTranscript);
           setTranscript(finalTranscript);
-          processVoiceCommand(finalTranscript.toLowerCase());
         }
       };
 
@@ -121,8 +120,8 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
 
   const startListening = () => {
     if (!recognition) return;
-    
     try {
+      setTranscript(''); // Clear previous transcript when starting
       recognition.start();
       setIsListening(true);
       console.log('Voice recognition started');
@@ -138,6 +137,28 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
     setIsListening(false);
     console.log('Voice recognition stopped');
   };
+
+  // Track last processed transcript to avoid re-processing
+  const lastProcessedTranscript = useRef('');
+
+  useEffect(() => {
+    if (!isListening) return;
+    // Set a timer to stop listening after 6 seconds if no new transcript
+    const stopTimer = setTimeout(() => {
+      if (transcript === '' || transcript === lastProcessedTranscript.current) {
+        stopListening();
+      }
+    }, 6000);
+    return () => clearTimeout(stopTimer);
+  }, [isListening, transcript]);
+
+  // Only process new transcripts
+  useEffect(() => {
+    if (transcript && transcript !== lastProcessedTranscript.current) {
+      lastProcessedTranscript.current = transcript;
+      processVoiceCommand(transcript.toLowerCase());
+    }
+  }, [transcript]);
 
   const processVoiceCommand = (command: string) => {
     console.log('Processing voice command:', command);
