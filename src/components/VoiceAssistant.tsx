@@ -33,14 +33,17 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
     }
   };
 
+  // Utility to detect mobile devices
+  const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   // Initialize speech recognition
   useEffect(() => {
     if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       
-      recognition.continuous = true;
-      recognition.interimResults = true;
+      recognition.continuous = !isMobile(); // continuous false on mobile
+      recognition.interimResults = false; // Only process final results
       recognition.lang = language === 'ml' ? 'ml-IN' : 'en-IN';
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -51,7 +54,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
             finalTranscript += transcript;
           }
         }
-        
         if (finalTranscript) {
           console.log('Voice transcript received:', finalTranscript);
           setTranscript(finalTranscript);
@@ -61,8 +63,6 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
-        
-        // Auto-retry on certain errors
         if (event.error === 'network' || event.error === 'audio-capture') {
           setTimeout(() => {
             if (isComponentActive) {
@@ -74,14 +74,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
 
       recognition.onend = () => {
         console.log('Speech recognition ended');
-        if (isComponentActive && isListening) {
-          // Auto-restart if component is still active
-          setTimeout(() => {
-            if (isComponentActive) {
-              recognition.start();
-            }
-          }, 500);
-        }
+        setIsListening(false);
       };
 
       setRecognition(recognition);
@@ -157,11 +150,12 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onTransactionAdd, langu
     if (transcript && transcript !== lastProcessedTranscript.current) {
       lastProcessedTranscript.current = transcript;
       processVoiceCommand(transcript.toLowerCase());
-      // Reset transcript and lastProcessedTranscript after processing to prevent duplicate entries
+      // After processing, stop listening and reset transcript to prevent duplicates
+      stopListening();
       setTimeout(() => {
         setTranscript('');
         lastProcessedTranscript.current = '';
-      }, 100); // Short delay to allow UI update
+      }, 100);
     }
   }, [transcript]);
 
