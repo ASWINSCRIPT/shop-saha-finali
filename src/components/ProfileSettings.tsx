@@ -1,6 +1,4 @@
-
 import React, { useState } from 'react';
-import { useUser } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,10 +10,9 @@ interface ProfileSettingsProps {
 }
 
 const ProfileSettings: React.FC<ProfileSettingsProps> = ({ language }) => {
-  const { user } = useUser();
   const [isEditing, setIsEditing] = useState(false);
-  const [firstName, setFirstName] = useState(user?.firstName || '');
-  const [lastName, setLastName] = useState(user?.lastName || '');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
 
   const texts = {
     en: {
@@ -40,19 +37,15 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ language }) => {
 
   const handleSave = async () => {
     try {
-      await user?.update({
-        firstName,
-        lastName,
-      });
-      setIsEditing(false);
+      // Placeholder for the removed Clerk update function
     } catch (error) {
       console.error('Error updating profile:', error);
     }
   };
 
   const handleCancel = () => {
-    setFirstName(user?.firstName || '');
-    setLastName(user?.lastName || '');
+    setFirstName('');
+    setLastName('');
     setIsEditing(false);
   };
 
@@ -89,7 +82,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ language }) => {
           <Label htmlFor="email">{texts[language].email}</Label>
           <Input
             id="email"
-            value={user?.emailAddresses[0]?.emailAddress || ''}
+            value=""
             disabled
           />
         </div>

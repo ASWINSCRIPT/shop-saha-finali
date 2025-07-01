@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/clerk-react';
 import { BookOpen, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import TransactionForm from '@/components/TransactionForm';
 import AppDock from '@/components/AppDock';
 import ProfileSettings from '@/components/ProfileSettings';
 import { ThemeProvider } from '@/components/theme-provider';
+import SupabaseAuth from '@/components/SupabaseAuth';
 
 interface Transaction {
   id: string;
@@ -22,13 +22,10 @@ interface Transaction {
 const Index = () => {
   console.log('Index component rendering...');
   
-  const { user, isLoaded, isSignedIn } = useUser();
   const [language, setLanguage] = useState<'en' | 'ml'>('ml');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activeTab, setActiveTab] = useState('voice'); // Changed default to voice
   const [error, setError] = useState<string | null>(null);
-
-  console.log('Clerk state:', { isLoaded, isSignedIn, user: !!user });
 
   // Load transactions from localStorage
   useEffect(() => {
@@ -80,14 +77,14 @@ const Index = () => {
   const texts = {
     en: {
       welcome: 'Welcome to CashBook',
-      personalizedWelcome: 'Hi',
+      personalizedWelcome: 'Welcome!',
       subtitle: 'Your friendly ledger companion for smart financial management',
       getStarted: 'Get Started with Google',
       switchLang: 'മലയാളം'
     },
     ml: {
       welcome: 'കാഷ്ബുക്കിലേക്ക് സ്വാഗതം',
-      personalizedWelcome: 'ഹായ്',
+      personalizedWelcome: 'Welcome!',
       subtitle: 'സ്‌മാർട്ട് ഫിനാൻഷ്യൽ മാനേജ്‌മെന്റിനായുള്ള നിങ്ങളുടെ സൗഹൃദപരമായ ലെഡ്ജർ കമ്പാനിയൻ',
       getStarted: 'Google ഉപയോഗിച്ച് ആരംഭിക്കുക',
       switchLang: 'English'
@@ -102,21 +99,6 @@ const Index = () => {
           <h1 className="text-2xl font-bold text-red-800 mb-4">Something went wrong</h1>
           <p className="text-red-600 mb-4">{error}</p>
           <Button onClick={() => window.location.reload()}>Reload Page</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading while Clerk is initializing
-  if (!isLoaded) {
-    console.log('Showing loading screen - Clerk not loaded yet');
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="w-8 h-8 text-white" />
-          </div>
-          <p className="text-gray-600">Loading CashBook...</p>
         </div>
       </div>
     );
@@ -145,7 +127,7 @@ const Index = () => {
           >
             <div className="text-center py-2 sm:py-4">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">
-                {texts[language].personalizedWelcome} {user?.firstName || 'User'}!
+                {texts[language].personalizedWelcome}!
               </h1>
               <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4">{texts[language].subtitle}</p>
               
@@ -195,11 +177,12 @@ const Index = () => {
   };
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey="cashbook-ui-theme">
-      <div className="min-h-screen">
-        {/* Floating Voice Assistant */}
-        {/* <FloatingVoiceAssistant /> */}
-        <SignedOut>
+    <>
+      <SupabaseAuth />
+      <ThemeProvider defaultTheme="system" storageKey="cashbook-ui-theme">
+        <div className="min-h-screen">
+          {/* Floating Voice Assistant */}
+          {/* <FloatingVoiceAssistant /> */}
           <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
             {/* Header */}
             <header className="p-3 sm:p-4 md:p-6 flex justify-between items-center">
@@ -241,19 +224,15 @@ const Index = () => {
                       </p>
                     </div>
 
-                    <SignInButton mode="modal">
-                      <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 text-sm sm:text-base md:text-lg">
-                        {texts[language].getStarted}
-                      </Button>
-                    </SignInButton>
+                    <Button size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 text-sm sm:text-base md:text-lg">
+                      {texts[language].getStarted}
+                    </Button>
                   </div>
                 </Card>
               </div>
             </main>
           </div>
-        </SignedOut>
 
-        <SignedIn>
           <div className="min-h-screen bg-background">
             {/* Header */}
             <header className="bg-card shadow-sm p-3 sm:p-4 flex justify-between items-center border-b">
@@ -265,7 +244,7 @@ const Index = () => {
               </div>
               <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
                 <div className="text-xs sm:text-sm text-muted-foreground hidden md:block">
-                  {texts[language].personalizedWelcome} {user?.firstName || user?.emailAddresses[0]?.emailAddress}!
+                  {texts[language].personalizedWelcome}!
                 </div>
                 <Button
                   variant="outline"
@@ -276,7 +255,6 @@ const Index = () => {
                   <Globe className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{texts[language].switchLang}</span>
                 </Button>
-                <UserButton />
               </div>
             </header>
 
@@ -294,9 +272,9 @@ const Index = () => {
               language={language} 
             />
           </div>
-        </SignedIn>
-      </div>
-    </ThemeProvider>
+        </div>
+      </ThemeProvider>
+    </>
   );
 };
 
