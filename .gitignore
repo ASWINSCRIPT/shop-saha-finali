@@ -7,8 +7,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
+# dependencies
+node_modules/
+bun.lockb
+
+# build output
+dev-dist/
+dist/
+build/
+
+# editor folders
+.cursor/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
 dist-ssr
 *.local
 
@@ -16,7 +32,6 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
