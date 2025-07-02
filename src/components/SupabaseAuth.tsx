@@ -1,199 +1,163 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { supabase } from '@/lib/utils';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from './ui/form';
-import { Input } from './ui/input';
-import { Button } from './ui/button';
-import { FaGoogle, FaGithub } from 'react-icons/fa';
-
-interface AuthFormInputs {
-  email: string;
-  password: string;
-}
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 const SupabaseAuth: React.FC = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
   const [showReset, setShowReset] = useState(false);
-  const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [resetError, setResetError] = useState<string | null>(null);
 
-  const form = useForm<AuthFormInputs>({
-    defaultValues: { email: '', password: '' },
-  });
-  const resetForm = useForm<{ email: string }>({
-    defaultValues: { email: '' },
-  });
-
-  React.useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-    });
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    };
+    getUser();
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
-    return () => { listener.subscription.unsubscribe(); };
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  const onSubmit = async (data: AuthFormInputs) => {
-    setLoading(true);
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-      });
-      if (error) setError(error.message);
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-      if (error) setError(error.message);
-    }
+    setMessage(null);
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage('Sign up successful! Please check your email to confirm your account.');
+    }
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage('Sign in successful!');
+    }
   };
 
   const handleSignOut = async () => {
-    setLoading(true);
-    await supabase.auth.signOut();
-    setLoading(false);
-  };
-
-  const handlePasswordReset = async (data: { email: string }) => {
-    setResetError(null);
-    setResetEmailSent(false);
-    setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(data.email);
-    setLoading(false);
-    if (error) setResetError(error.message);
-    else setResetEmailSent(true);
-  };
-
-  const handleOAuthSignIn = async (provider: 'google' | 'github') => {
-    setLoading(true);
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
-    if (error) setError(error.message);
+    setMessage(null);
+    setLoading(true);
+    const { error } = await supabase.auth.signOut();
     setLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage('Signed out successfully.');
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail);
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage('Password reset email sent! Please check your inbox.');
+      setShowReset(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError(null);
+    setMessage(null);
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+    }
   };
 
   if (user) {
-    const emailConfirmed = user.email_confirmed_at || user.email_confirmed;
     return (
-      <div className="p-4 border rounded bg-white max-w-sm mx-auto mt-8">
-        <p className="mb-4">Signed in as <b>{user.email}</b></p>
-        {!emailConfirmed && (
-          <div className="mb-4 text-yellow-600 text-sm">
-            Please verify your email address. Check your inbox for a verification email.
-          </div>
-        )}
-        <Button onClick={handleSignOut} disabled={loading}>Sign Out</Button>
-      </div>
-    );
-  }
-
-  if (showReset) {
-    return (
-      <div className="p-4 border rounded bg-white max-w-sm mx-auto mt-8">
-        <h2 className="text-lg font-bold mb-4">Reset Password</h2>
-        <Form {...resetForm}>
-          <form onSubmit={resetForm.handleSubmit(handlePasswordReset)} className="space-y-4">
-            <FormField
-              control={resetForm.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="you@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {resetError && <div className="text-red-500 text-sm">{resetError}</div>}
-            {resetEmailSent && <div className="text-green-600 text-sm">Password reset email sent! Check your inbox.</div>}
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Sending...' : 'Send Reset Email'}
-            </Button>
-          </form>
-        </Form>
-        <div className="mt-4 text-center">
-          <button
-            className="text-blue-600 hover:underline text-sm"
-            onClick={() => setShowReset(false)}
-          >
-            Back to Sign In
-          </button>
+      <div style={{ maxWidth: 400, margin: '0 auto', padding: 24 }}>
+        <h2>Welcome, {user.email}</h2>
+        <button onClick={handleSignOut} disabled={loading} style={{ marginBottom: 8 }}>
+          Sign Out
+        </button>
+        <div style={{ fontSize: 12, color: '#555' }}>
+          <strong>User ID:</strong> {user.id}
         </div>
+        {message && <div style={{ color: 'green', marginTop: 8 }}>{message}</div>}
+        {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
       </div>
     );
   }
 
   return (
-    <div className="p-4 border rounded bg-white max-w-sm mx-auto mt-8">
-      <h2 className="text-lg font-bold mb-4">{isSignUp ? 'Sign Up' : 'Sign In'}</h2>
-      <div className="flex flex-col gap-2 mb-4">
-        <Button type="button" variant="outline" className="flex items-center justify-center gap-2" onClick={() => handleOAuthSignIn('google')} disabled={loading}>
-          <FaGoogle /> Sign in with Google
-        </Button>
-        <Button type="button" variant="outline" className="flex items-center justify-center gap-2" onClick={() => handleOAuthSignIn('github')} disabled={loading}>
-          <FaGithub /> Sign in with GitHub
-        </Button>
-      </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="you@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+    <div style={{ maxWidth: 400, margin: '0 auto', padding: 24 }}>
+      <h2>Sign Up / Sign In</h2>
+      <form>
+        <div>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+            style={{ width: '100%', marginBottom: 8 }}
           />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="Password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+        </div>
+        <div>
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+            style={{ width: '100%', marginBottom: 8 }}
           />
-          {error && <div className="text-red-500 text-sm">{error}</div>}
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
-          </Button>
-        </form>
-      </Form>
-      <div className="mt-4 flex flex-col items-center gap-2">
-        <button
-          className="text-blue-600 hover:underline text-sm"
-          onClick={() => setIsSignUp((v) => !v)}
-        >
-          {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <button onClick={handleSignUp} type="submit" disabled={loading}>Sign Up</button>
+          <button onClick={handleSignIn} type="button" disabled={loading}>Sign In</button>
+        </div>
+        <button type="button" onClick={() => setShowReset(!showReset)} style={{ marginBottom: 8 }}>
+          Forgot Password?
         </button>
-        {!isSignUp && (
-          <button
-            className="text-blue-600 hover:underline text-sm"
-            onClick={() => setShowReset(true)}
-          >
-            Forgot Password?
-          </button>
+        <button type="button" onClick={handleGoogleSignIn} style={{ background: '#4285F4', color: 'white', width: '100%' }} disabled={loading}>
+          Sign in with Google
+        </button>
+        {showReset && (
+          <form onSubmit={handleResetPassword} style={{ marginTop: 8 }}>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={resetEmail}
+              onChange={e => setResetEmail(e.target.value)}
+              required
+              style={{ width: '100%', marginBottom: 8 }}
+            />
+            <button type="submit" disabled={loading}>Send Reset Email</button>
+          </form>
         )}
-      </div>
+        {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
+        {message && <div style={{ color: 'green', marginTop: 8 }}>{message}</div>}
+      </form>
     </div>
   );
 };

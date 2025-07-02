@@ -1,8 +1,8 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '../lib/supabaseClient';
 
 interface Transaction {
   id: string;
@@ -85,8 +85,46 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, language }) => {
     { name: texts[language].expense, value: totalExpenses, color: '#f87171' }
   ];
 
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  const handleUpload = async () => {
+    setUploading(true);
+    setUploadError(null);
+    setUploadSuccess(false);
+
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+
+    if (!userId) {
+      setUploadError('User not authenticated');
+      setUploading(false);
+      return;
+    }
+
+    const transactionsToUpload = recentTransactions.map(t => ({
+      amount: t.amount,
+      description: t.description,
+      date: t.date instanceof Date ? t.date.toISOString().slice(0, 10) : t.date,
+      type: t.type,
+      user_id: userId,
+    }));
+
+    const { error } = await supabase
+      .from('transactions')
+      .insert(transactionsToUpload);
+
+    if (error) {
+      setUploadError(error.message);
+    } else {
+      setUploadSuccess(true);
+    }
+    setUploading(false);
+  };
+
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6" style={{ position: 'relative' }}>
       <div className="flex items-center justify-between">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
           {texts[language].dashboard}
@@ -177,7 +215,6 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, language }) => {
                     cy="50%"
                     outerRadius={80}
                     label={(entry) => `₹${entry.value.toLocaleString()}`}
-                    labelStyle={{ fontSize: 12 }}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -240,6 +277,32 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, language }) => {
           </CardContent>
         </Card>
       )}
+
+      {/* Floating Upload Button */}
+      <button
+        onClick={handleUpload}
+        disabled={uploading}
+        style={{
+          position: 'fixed',
+          bottom: 32,
+          right: 32,
+          zIndex: 1000,
+          padding: '12px 20px',
+          background: '#2563eb',
+          color: 'white',
+          border: 'none',
+          borderRadius: '24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          fontWeight: 'bold',
+          fontSize: 16,
+          cursor: uploading ? 'not-allowed' : 'pointer',
+          opacity: uploading ? 0.7 : 1,
+        }}
+      >
+        {uploading ? 'Uploading...' : 'Upload Recent Transactions'}
+      </button>
+      {uploadError && <div style={{ position: 'fixed', bottom: 80, right: 32, color: 'red', zIndex: 1001 }}>{uploadError}</div>}
+      {uploadSuccess && <div style={{ position: 'fixed', bottom: 80, right: 32, color: 'green', zIndex: 1001 }}>Upload successful!</div>}
     </div>
   );
 };
